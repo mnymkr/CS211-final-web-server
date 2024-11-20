@@ -4,56 +4,70 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#define PORT 8386
+#define PORT 6969
 #define BUFFER_SIZE 100
 
-int main() {
-    int sock;
-    struct sockaddr_in server_addr;
-    char request[BUFFER_SIZE], response[BUFFER_SIZE];
-
-    // Create socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-//    if (sock < 0) {
-//        perror("Socket creation failed");
-//        return 1;
-//    }
-
-    // Set up server address structure
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Localhost
-
-    // Connect to the server
-    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Connection failed");
-        close(sock);
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <number_of_requests>\n", argv[0]);
         return 1;
     }
 
-    // Create HTTP GET request
-    sprintf(request, "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
-
-    // Send request to the server
-    if (send(sock, request, strlen(request), 0) < 0) {
-        perror("Send failed");
-        close(sock);
+    int num_requests = atoi(argv[1]);
+    if (num_requests <= 0) {
+        fprintf(stderr, "Number of requests must be a positive integer.\n");
         return 1;
     }
 
-    // Receive response from the server
-    int bytes_received = recv(sock, response, BUFFER_SIZE - 1, 0);
-    if (bytes_received < 0) {
-        perror("Receive failed");
+    for (int i = 0; i < num_requests; i++) {
+        int sock;
+        struct sockaddr_in server_addr;
+        char request[BUFFER_SIZE], response[BUFFER_SIZE];
+
+        // Create socket
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {
+            perror("Socket creation failed");
+            return 1;
+        }
+
+        // Set up server address structure
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(PORT);
+        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Localhost
+
+        // Connect to the server
+        if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+            perror("Connection failed");
+            close(sock);
+            return 1;
+        }
+
+        // Create HTTP GET request
+        sprintf(request, "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+
+        // Send request to the server
+        if (send(sock, request, strlen(request), 0) < 0) {
+            perror("Send failed");
+            close(sock);
+            return 1;
+        }
+
+        // Receive response from the server
+        int bytes_received = recv(sock, response, BUFFER_SIZE - 1, 0);
+        if (bytes_received < 0) {
+            perror("Receive failed");
+            close(sock);
+            return 1;
+        }
+
+        // Null-terminate and print the response
+        response[bytes_received] = '\0';
+        printf("Server response:\n%s\n", response);
+
+        // Close the socket
         close(sock);
-        return 1;
     }
 
-    // Null-terminate and print the response
-    response[bytes_received] = '\0';
-    printf("Server response:\n%s\n", response);
-
-    // Close the socket
-    close(sock);
     return 0;
 }
