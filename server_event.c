@@ -103,11 +103,13 @@ int main() {
         }
 
         // Chờ sự kiện (kết nối mới hoặc dữ liệu đến từ client)
+        printf("Waiting for events...\n");
         int activity = select(FD_SETSIZE, &readfds, NULL, NULL, NULL);
         if (activity < 0) {
             perror("Error in select");
             continue;
         }
+        printf("Select returned, activity detected\n");
 
         // Kiểm tra nếu có kết nối mới đến server
         if (FD_ISSET(server_sock, &readfds)) {
@@ -116,6 +118,7 @@ int main() {
                 perror("Error accepting connection");
                 continue;
             }
+            printf("New connection accepted: client_socket %d\n", client_sock);
 
             // Chấp nhận kết nối và thêm vào mảng client_sockets
             for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -132,6 +135,7 @@ int main() {
         // Kiểm tra tất cả các client đang kết nối
         for (int i = 0; i < MAX_CLIENTS; i++) {
             if (client_sockets[i] != -1 && FD_ISSET(client_sockets[i], &readfds)) {
+                printf("Handling client %d\n", client_sockets[i]);
                 handle_client(client_sockets[i]);
                 client_sockets[i] = -1;  // Đóng socket client sau khi xử lý
             }
