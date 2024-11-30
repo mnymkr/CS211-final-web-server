@@ -10,7 +10,32 @@
 #include <sys/select.h>
 
 #define PORT 8080
-#define MAX_CLIENTS 1000   // Tăng số lượng client
+#define MAX_CLIENTS 1000
+
+void send_file(int client_sock, const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        const char *error_response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nFile not found\n";
+        send(client_sock, error_response, strlen(error_response), 0);
+        return;
+    }
+
+    // Tạo header phản hồi
+    char response_header[1024];
+    snprintf(response_header, sizeof(response_header),
+             "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n\r\n");
+
+    send(client_sock, response_header, strlen(response_header), 0);
+
+    // Gửi nội dung file
+    char buffer[1024];
+    size_t bytes_read;
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        send(client_sock, buffer, bytes_read, 0);
+    }
+
+    fclose(file);
+}
 
 void handle_client(int client_sock) {
     char buffer[1024];
@@ -19,9 +44,18 @@ void handle_client(int client_sock) {
         buffer[bytes_received] = '\0';  // Null-terminate the received data
         printf("Received message: %s\n", buffer);
 
-        // Xử lý request và gửi phản hồi
-        const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World\n";
-        send(client_sock, response, strlen(response), 0);
+        // Phân tích request để xác định loại yêu cầu
+        if (strstr(buffer, "GET / HTTP/1.1") != NULL) {
+            // Yêu cầu Non-IO
+            const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World\n";
+            send(client_sock, response, strlen(response), 0);
+        } else if (strstr(buffer, "GET /file HTTP/1.1") != NULL) {
+            // Yêu cầu IO, trả về file
+            send_file(client_sock, "example.txt"); // Đọc và trả về nội dung file example.txt
+        } else {
+            const char *response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nBad Request\n";
+            send(client_sock, response, strlen(response), 0);
+        }
     }
 
     if (bytes_received <= 0) {
@@ -29,13 +63,12 @@ void handle_client(int client_sock) {
     }
 }
 
-
 int main() {
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
     fd_set readfds;
-    int client_sockets[MAX_CLIENTS];  // Mảng lưu các socket client
+    int client_sockets[MAX_CLIENTS];
 
     // Tạo server socket
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -92,7 +125,6 @@ int main() {
             perror("Error in select");
             continue;
         }
-        printf("Select returned, activity detected\n");
 
         // Kiểm tra nếu có kết nối mới đến server
         if (FD_ISSET(server_sock, &readfds)) {
@@ -118,7 +150,6 @@ int main() {
         // Kiểm tra tất cả các client đang kết nối
         for (int i = 0; i < MAX_CLIENTS; i++) {
             if (client_sockets[i] != -1 && FD_ISSET(client_sockets[i], &readfds)) {
-                printf("Handling client %d\n", client_sockets[i]);
                 handle_client(client_sockets[i]);
                 client_sockets[i] = -1;  // Đóng socket client sau khi xử lý
             }
@@ -128,4 +159,3 @@ int main() {
     close(server_sock);
     return 0;
 }
-
