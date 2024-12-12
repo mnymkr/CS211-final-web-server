@@ -1,0 +1,35 @@
+#!/bin/bash
+# Đo thời gian tổng cộng
+start=$(date +%s.%N)
+
+# Chạy 1000 client đồng thời
+for i in {1..1000}
+do
+    ./client_event &
+done
+
+# Chờ tất cả các client chạy xong
+wait
+
+# Kết thúc đo thời gian
+end=$(date +%s.%N)
+
+# Log thời gian bắt đầu và kết thúc
+echo "Start time: $start"
+echo "End time: $end"
+
+# Tính thời gian thực thi
+elapsed=$(echo "scale=6; $end - $start" | bc)
+
+# Kiểm tra nếu thời gian là 0
+if (( $(echo "$elapsed == 0" | bc -l) )); then
+    echo "Error: Total time is 0 seconds. Cannot calculate throughput."
+    exit 1
+fi
+
+echo "Total time for 1000 clients: $elapsed seconds"
+
+# Tính thông lượng
+throughput=$(echo "1000 / $elapsed" | bc -l)
+echo "Throughput: $throughput requests per second"
+
