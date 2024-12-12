@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 
-#define PORT 6969
+#define PORT 8080
 #define BUFFER_SIZE 1024
 
 void *handle_client(void *arg) {
@@ -14,7 +14,7 @@ void *handle_client(void *arg) {
 
     char buffer[BUFFER_SIZE];
     // Print a message to indicate that the thread is handling a request
-    printf("Thread %ld: Handling request from client socket %d\n", pthread_self(), client_socket);
+    //printf("Thread %ld: Handling request from client socket %d\n", pthread_self(), client_socket);
 
     // Read client request
     recv(client_socket, buffer, BUFFER_SIZE, 0);
@@ -62,7 +62,7 @@ int main() {
     }
 
     // Listen for incoming connections
-    listen(server_fd, 5);
+    listen(server_fd, 1000);
     printf("HTTP server listening on port %d\n", PORT);
 
     // Accept and handle connections

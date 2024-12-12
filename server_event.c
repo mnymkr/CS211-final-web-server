@@ -16,7 +16,7 @@
 
 void handle_client(int client_sock) {
     struct timespec start, end;
-    clock_gettime(CLOCK_MONOTONIC, &start); // Start time
+    //clock_gettime(CLOCK_MONOTONIC, &start); // Start time
 
     char buffer[BUFFER_SIZE];
     ssize_t bytes_received;
@@ -24,7 +24,7 @@ void handle_client(int client_sock) {
     // Receive data from client
     while ((bytes_received = recv(client_sock, buffer, sizeof(buffer) - 1, 0)) > 0) {
         buffer[bytes_received] = '\0'; // Null-terminate received data
-        printf("Received message: %s\n", buffer);
+      //  printf("Received message: %s\n", buffer);
 
         // Send response
         const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World\n";
@@ -33,12 +33,12 @@ void handle_client(int client_sock) {
 
     close(client_sock); // Close the client connection
 
-    clock_gettime(CLOCK_MONOTONIC, &end); // End time
+    //clock_gettime(CLOCK_MONOTONIC, &end); // End time
 
     // Calculate elapsed time
-    double elapsed_time = (end.tv_sec - start.tv_sec) * 1000.0 +
+    //double elapsed_time = (end.tv_sec - start.tv_sec) * 1000.0 +
                           (end.tv_nsec - start.tv_nsec) / 1000000.0;
-    printf("Client %d processed in %.2f ms\n", client_sock, elapsed_time);
+    //printf("Client %d processed in %.2f ms\n", client_sock, elapsed_time);
 }
 
 int main() {
@@ -84,8 +84,8 @@ int main() {
         client_sockets[i] = -1;
     }
 
-    struct timespec server_start, server_end;
-    clock_gettime(CLOCK_MONOTONIC, &server_start); // Start measuring total server time
+    //struct timespec server_start, server_end;
+    //clock_gettime(CLOCK_MONOTONIC, &server_start); // Start measuring total server time
 
     while (1) {
         FD_ZERO(&readfds);
@@ -112,7 +112,7 @@ int main() {
                 continue;
             }
 
-            printf("New connection accepted: client_socket %d\n", client_sock);
+            //printf("New connection accepted: client_socket %d\n", client_sock);
 
             // Add client socket to client_sockets array
             for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -128,18 +128,18 @@ int main() {
         // Handle data from clients
         for (int i = 0; i < MAX_CLIENTS; i++) {
             if (client_sockets[i] != -1 && FD_ISSET(client_sockets[i], &readfds)) {
-                printf("Handling client %d\n", client_sockets[i]);
+                //printf("Handling client %d\n", client_sockets[i]);
                 handle_client(client_sockets[i]);
                 client_sockets[i] = -1; // Mark socket as free after handling
             }
         }
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &server_end); // End measuring total server time
+    //clock_gettime(CLOCK_MONOTONIC, &server_end); // End measuring total server time
 
-    double total_elapsed = (server_end.tv_sec - server_start.tv_sec) * 1000.0 +
-                           (server_end.tv_nsec - server_start.tv_nsec) / 1000000.0;
-    printf("Server ran for %.2f ms\n", total_elapsed);
+    //double total_elapsed = (server_end.tv_sec - server_start.tv_sec) * 1000.0 +
+    //                       (server_end.tv_nsec - server_start.tv_nsec) / 1000000.0;
+    //printf("Server ran for %.2f ms\n", total_elapsed);
 
     close(server_sock);
     return 0;

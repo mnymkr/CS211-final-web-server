@@ -12,7 +12,7 @@
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8080
 #define BUFFER_SIZE 1024
-#define TOTAL_REQUESTS 1000 // Tổng số requests
+#define TOTAL_REQUESTS 500 // Tổng số requests
 
 void *send_request(void *arg) {
     struct sockaddr_in server_addr;
@@ -84,8 +84,9 @@ int main() {
     // Tính throughput
     float throughput = (TOTAL_REQUESTS / total_elapsed) * 1000; // Requests per second
 
-    printf("\nTotal time for %d concurrent requests: %.2f ms\n", TOTAL_REQUESTS, total_elapsed);
-    printf("Throughput: %.2f requests per second\n\n", throughput);
+    //printf("\nTotal time for %d concurrent requests: %.2f ms\n", TOTAL_REQUESTS, total_elapsed);
+    printf("\nTotal time taken for all files: %f ms\n", total_elapsed);
+    printf("Throughput: %f requests per second\n\n", throughput);
 
     return 0;
 }

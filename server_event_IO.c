@@ -42,7 +42,7 @@ void handle_client(int client_sock) {
     ssize_t bytes_received;
     while ((bytes_received = recv(client_sock, buffer, sizeof(buffer) - 1, 0)) > 0) {
         buffer[bytes_received] = '\0';  // Null-terminate the received data
-        printf("Received message: %s\n", buffer);
+        // printf("Received message: %s\n", buffer);
 
         send_file(client_sock, buffer);
 
@@ -102,7 +102,7 @@ int main() {
     // Set server socket to non-blocking mode
     fcntl(server_sock, F_SETFL, O_NONBLOCK);
 
-    printf("Server is listening on port %d...\n", PORT);
+    //printf("Server is listening on port %d...\n", PORT);
 
     // Khởi tạo mảng client_sockets
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -121,7 +121,7 @@ int main() {
         }
 
         // Chờ sự kiện (kết nối mới hoặc dữ liệu đến từ client)
-        printf("Waiting for events...\n");
+        //printf("Waiting for events...\n");
         int activity = select(FD_SETSIZE, &readfds, NULL, NULL, NULL);
         if (activity < 0) {
             perror("Error in select");
@@ -135,7 +135,7 @@ int main() {
                 perror("Error accepting connection");
                 continue;
             }
-            printf("New connection accepted: client_socket %d\n", client_sock);
+            //printf("New connection accepted: client_socket %d\n", client_sock);
 
             // Chấp nhận kết nối và thêm vào mảng client_sockets
             for (int i = 0; i < MAX_CLIENTS; i++) {
