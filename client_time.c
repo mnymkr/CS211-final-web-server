@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,52 +14,63 @@
 #define BUFFER_SIZE 1024
 #define TOTAL_REQUESTS 1000 // Tổng số requests
 
-int main() {
+void *send_request(void *arg) {
     struct sockaddr_in server_addr;
     char *request = "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
     char buffer[BUFFER_SIZE];
-    struct timeval start, end; // Để đo thời gian tổng cộng
 
     // Cấu hình địa chỉ server
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
+    // Tạo socket
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Error creating socket");
+        pthread_exit(NULL); // Kết thúc thread nếu lỗi
+    }
+
+    // Kết nối đến server
+    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Connection failed");
+        close(sock);
+        pthread_exit(NULL); // Kết thúc thread nếu lỗi
+    }
+
+    // Gửi HTTP request
+    send(sock, request, strlen(request), 0);
+
+    // Nhận phản hồi từ server
+    ssize_t bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_received > 0) {
+        buffer[bytes_received] = '\0'; // Null-terminate dữ liệu nhận được
+        // In phản hồi nếu cần (có thể bỏ để tiết kiệm thời gian)
+        // printf("Response from server:\n%s\n", buffer);
+    }
+
+    // Đóng socket
+    close(sock);
+    pthread_exit(NULL); // Kết thúc thread
+}
+
+int main() {
+    pthread_t threads[TOTAL_REQUESTS]; // Mảng chứa thread ID
+    struct timeval start, end;         // Đo thời gian tổng cộng
+
     // Đo thời gian bắt đầu
     gettimeofday(&start, NULL);
 
+    // Tạo các thread để gửi request
     for (int i = 0; i < TOTAL_REQUESTS; i++) {
-        int sock;
-
-        // Tạo socket
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) {
-            perror("Error creating socket");
-            exit(EXIT_FAILURE);
+        if (pthread_create(&threads[i], NULL, send_request, NULL) != 0) {
+            perror("Error creating thread");
         }
+    }
 
-        // Kết nối đến server
-        if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-            perror("Connection failed");
-            close(sock);
-            continue; // Bỏ qua request này và tiếp tục
-        }
-
-        // Gửi HTTP request
-        send(sock, request, strlen(request), 0);
-
-        // Nhận phản hồi từ server
-        ssize_t bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received < 0) {
-            perror("Error receiving response");
-        } else {
-            buffer[bytes_received] = '\0'; // Null-terminate dữ liệu nhận được
-            // In phản hồi nếu cần (có thể bỏ để tiết kiệm thời gian)
-            // printf("Response from server:\n%s\n", buffer);
-        }
-
-        // Đóng socket
-        close(sock);
+    // Chờ tất cả các thread hoàn thành
+    for (int i = 0; i < TOTAL_REQUESTS; i++) {
+        pthread_join(threads[i], NULL);
     }
 
     // Đo thời gian kết thúc
@@ -72,7 +84,7 @@ int main() {
     // Tính throughput
     float throughput = (TOTAL_REQUESTS / total_elapsed) * 1000; // Requests per second
 
-    printf("\nTotal time for %d requests: %.2f ms\n", TOTAL_REQUESTS, total_elapsed);
+    printf("\nTotal time for %d concurrent requests: %.2f ms\n", TOTAL_REQUESTS, total_elapsed);
     printf("Throughput: %.2f requests per second\n\n", throughput);
 
     return 0;
