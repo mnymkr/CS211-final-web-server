@@ -20,9 +20,6 @@ void *send_file_request(void *arg) {
     request_t *request = (request_t *)arg;
     struct timeval start, end;
 
-    // Start timing
-    gettimeofday(&start, NULL);
-
     int server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
         perror("Socket creation failed");
@@ -43,7 +40,10 @@ void *send_file_request(void *arg) {
         free(request); // Free allocated memory for request
         return NULL;
     }
-
+    
+    // Start timing
+    gettimeofday(&start, NULL);
+    
     // Send the filepath to the server
     send(server_socket, request->filepath, strlen(request->filepath), 0);
 
