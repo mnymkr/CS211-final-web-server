@@ -8,7 +8,7 @@
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define BACKLOG 300 /* Maximum length of pending connections */
+#define BACKLOG 1000 /* Maximum length of pending connections */
 
 void *handle_client(void *arg) {
     int client_socket = *(int *)arg;
