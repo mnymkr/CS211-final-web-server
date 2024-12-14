@@ -1,4 +1,4 @@
-# CS211 Final Web Server Benchmarking
+# Thread-based and Event-based Server Comparison
 
 This repository benchmarks the thread-based and event-based server for both non-IO and IO-bound tasks.
 
@@ -7,7 +7,7 @@ This repository benchmarks the thread-based and event-based server for both non-
 ### Clone the Repository
 
 ```bash
-git clone [<repository-url>](https://github.com/mnymkr/CS211-final-web-server.git)
+git clone https://github.com/mnymkr/CS211-final-web-server.git
 cd CS211-final-web-server
 ```
 
